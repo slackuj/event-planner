@@ -109,7 +109,7 @@ docker compose exec backend npm run db:seed
 > You need to run migration and seeding only once !
 
 # START GUIDE
-The project is up and running at http://localhost:5173
+The project is up and running at **FRONTEND_ORIGIN**<br>
 Next time, you can now run the project using:<br>
 ```bash
 docker compose up
