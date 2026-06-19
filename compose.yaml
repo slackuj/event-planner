@@ -1,0 +1,63 @@
+services:
+  # MySQL Database Service
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:${DB_DATA_VOLUME}
+
+  # phpMyAdmin Service (Web Interface for MySQL)
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin_gui
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      # Tells phpMyAdmin which database service to connect to
+      PMA_HOST: db
+    depends_on:
+      - db
+
+  # event-planner-server
+  backend:
+    build:
+      context: ./event-planner-server
+      dockerfile: Dockerfile
+    container_name: event_planner_backend
+    restart: always
+    ports:
+      - "17190:17190" # Maps laptop port 17190 to internal container EXPOSE port
+    volumes:
+      - ./event-planner-server:/event-planner # Binds local server source code for hot-reloading
+      - /event-planner/node_modules # Anonymous volume prevents host machine from wiping container node_modules
+    env_file:
+      - .env # Automatically passes runtime secrets/DB credentials to your server code
+    depends_on:
+      - db
+
+  # event-planner-client
+  frontend:
+    build:
+      context: ./event-planner-client
+      dockerfile: Dockerfile
+    container_name: event_planner_frontend
+    restart: always
+    ports:
+      - "5173:5173" # Maps laptop port 5173 to internal container EXPOSE port
+    volumes:
+      - ./event-planner-client:/event-planner # Binds local client source code for hot-reloading
+      - /event-planner/node_modules # Anonymous volume prevents host machine from wiping container node_modules
+    environment:
+      - NODE_ENV=development
+
+volumes:
+  db_data:
